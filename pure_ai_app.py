@@ -90,14 +90,6 @@ if st.session_state.phase == 0:
         st.rerun()
     st.stop()
 # ==================== 阶段一界面 ====================
-if st.session_state.phase == 1:
-    title = "阶段一"
-    if ai_phase1:
-        title += "（有AI助手）"
-    else:
-        title += "（独立完成）"
-    st.title(title)
-
     st.markdown("### 📋 任务说明")
       # 根据是否有AI显示不同的指导语
     if ai_phase1:
@@ -176,14 +168,6 @@ if st.session_state.phase == 1.5:
         st.rerun()
     st.stop()
 # ==================== 阶段二界面 ====================
-if st.session_state.phase == 2:
-    title = "阶段二"
-    if ai_phase2:
-        title += "（有AI助手）"
-    else:
-        title += "（独立完成）"
-    st.title(title)
-
     st.markdown("### 📋 任务说明")
     if ai_phase2:
         st.markdown("""
