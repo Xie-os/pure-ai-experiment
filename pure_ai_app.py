@@ -83,7 +83,7 @@ def activate_ai_greeting():
 if st.session_state.phase == 0:
     st.title("实验前问卷")
     st.markdown("请点击下方链接完成前测问卷，完成后回到本页面点击下方按钮。")
-    st.markdown("[📝 打开前测问卷](https://v.wjx.cn/vm/PcYNF25.aspx# )")
+    st.markdown("[📝 打开前测问卷](https://v.wjx.cn/vm/mquTsTX.aspx# )")
     st.divider()
     if st.button("我已完成前测问卷，开始实验"):
         st.session_state.phase = 1
@@ -161,7 +161,7 @@ if st.session_state.phase == 1.5:
     
     # 根据阶段一是否有AI显示不同问卷
     if ai_phase1:
-        survey_link = "https://v.wjx.cn/vm/OCT5rUZ.aspx#"
+        survey_link = "https://v.wjx.cn/vm/OUqrnbt.aspx#"
     else:
         survey_link = "https://v.wjx.cn/vm/eI3byHI.aspx#"
         
@@ -307,7 +307,7 @@ if st.session_state.phase == 2.5:
     
     # 根据阶段二是否有AI显示不同问卷
     if ai_phase2:
-        survey_link = "https://v.wjx.cn/vm/tc5gWto.aspx#"
+        survey_link = "https://v.wjx.cn/vm/rXkfPYr.aspx#"
     else:
         survey_link = "https://v.wjx.cn/vm/thj2x5g.aspx#"
         
