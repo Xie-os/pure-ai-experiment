@@ -111,18 +111,33 @@ if st.session_state.phase == 1:
 
     if ai_phase1:
         activate_ai_greeting()
-        col_left, col_right = st.columns([1, 1])
+        col_left, col_right = st.columns(
+            [1, 1],
+            gap="large",
+            vertical_alignment="top"
+        )
         with col_left:
             st.subheader("💬 与AI讨论区")
-            for msg in st.session_state.messages:
-                if msg["role"] in ["user", "assistant"]:
-                    with st.chat_message(msg["role"]):
-                        st.markdown(msg["content"])
-            user_input = st.chat_input("输入你的想法...")
+            chat_history = st.container(
+                height=460,
+                border=True,
+                key="phase1_chat_history",
+                autoscroll=True
+            )
+            with chat_history:
+                for msg in st.session_state.messages:
+                    if msg["role"] in ["user", "assistant"]:
+                        with st.chat_message(msg["role"]):
+                            st.markdown(msg["content"])
+            user_input = st.chat_input(
+                "输入你的想法...",
+                key="phase1_chat_input"
+            )
             if user_input:
                 st.session_state.messages.append({"role": "user", "content": user_input})
-                with st.chat_message("user"):
-                    st.markdown(user_input)
+                with chat_history:
+                    with st.chat_message("user"):
+                        st.markdown(user_input)
                 with st.spinner("AI思考中..."):
                     resp = client.chat.completions.create(
                         model="deepseek-chat",
@@ -132,8 +147,9 @@ if st.session_state.phase == 1:
                     )
                 ai_msg = resp.choices[0].message.content
                 st.session_state.messages.append({"role": "assistant", "content": ai_msg})
-                with st.chat_message("assistant"):
-                    st.markdown(ai_msg)
+                with chat_history:
+                    with st.chat_message("assistant"):
+                        st.markdown(ai_msg)
         with col_right:
             st.subheader("📝 阶段一作答区")
             st.caption("在此整理你的思路（可结合AI建议）。可以用【】括起**你自己的原创想法**，最终提交时会显示为红色。")
@@ -203,18 +219,33 @@ if st.session_state.phase == 2:
 
     if ai_phase2:
         activate_ai_greeting()
-        col_left, col_right = st.columns([1, 1])
+        col_left, col_right = st.columns(
+            [1, 1],
+            gap="large",
+            vertical_alignment="top"
+        )
         with col_left:
             st.subheader("💬 与AI讨论区")
-            for msg in st.session_state.messages:
-                if msg["role"] in ["user", "assistant"]:
-                    with st.chat_message(msg["role"]):
-                        st.markdown(msg["content"])
-            user_input = st.chat_input("输入你的想法...")
+            chat_history = st.container(
+                height=460,
+                border=True,
+                key="phase2_chat_history",
+                autoscroll=True
+            )
+            with chat_history:
+                for msg in st.session_state.messages:
+                    if msg["role"] in ["user", "assistant"]:
+                        with st.chat_message(msg["role"]):
+                            st.markdown(msg["content"])
+            user_input = st.chat_input(
+                "输入你的想法...",
+                key="phase2_chat_input"
+            )
             if user_input:
                 st.session_state.messages.append({"role": "user", "content": user_input})
-                with st.chat_message("user"):
-                    st.markdown(user_input)
+                with chat_history:
+                    with st.chat_message("user"):
+                        st.markdown(user_input)
                 with st.spinner("AI思考中..."):
                     resp = client.chat.completions.create(
                         model="deepseek-chat",
@@ -224,8 +255,9 @@ if st.session_state.phase == 2:
                     )
                 ai_msg = resp.choices[0].message.content
                 st.session_state.messages.append({"role": "assistant", "content": ai_msg})
-                with st.chat_message("assistant"):
-                    st.markdown(ai_msg)
+                with chat_history:
+                    with st.chat_message("assistant"):
+                        st.markdown(ai_msg)
         with col_right:
             st.subheader("📝 阶段二作答区")
             st.caption("可整合阶段一内容和AI建议。可以用【】括起**你自己的原创想法**，提交后将显示为红色，以区别于AI的建议。")
