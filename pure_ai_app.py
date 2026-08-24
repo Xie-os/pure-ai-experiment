@@ -11,7 +11,11 @@ import zipfile
 import glob
 
 # ==================== 页面设置 ====================
-st.set_page_config(page_title="设计实验", layout="wide")
+st.set_page_config(
+    page_title="设计实验",
+    layout="wide",
+    initial_sidebar_state="collapsed"
+)
 
 # ==================== 实验数据保存与下载工具 ====================
 DATA_DIR = tempfile.gettempdir()
