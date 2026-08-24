@@ -2,15 +2,108 @@ import streamlit as st
 import os
 import json
 import re
+import io
+import hmac
 from datetime import datetime
 from openai import OpenAI
 import tempfile
 import zipfile
 import glob
-import base64
 
 # ==================== 页面设置 ====================
 st.set_page_config(page_title="设计实验", layout="wide")
+
+# ==================== 实验数据保存与下载工具 ====================
+DATA_DIR = tempfile.gettempdir()
+
+
+def safe_user_id(user_id):
+    """生成安全的文件名，避免编号中的特殊字符影响保存路径。"""
+    return re.sub(r"[^A-Za-z0-9_-]", "_", user_id)
+
+
+def experiment_filename(user_id):
+    return os.path.join(DATA_DIR, f"experiment_{safe_user_id(user_id)}.json")
+
+
+def save_experiment_data(data):
+    filename = experiment_filename(data["user_id"])
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return filename
+
+
+def build_all_experiments_zip():
+    """在内存中打包全部提交，避免先生成 ZIP、再点一次下载。"""
+    json_files = sorted(glob.glob(os.path.join(DATA_DIR, "experiment_*.json")))
+    if not json_files:
+        return None, []
+
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zf:
+        for filename in json_files:
+            zf.write(filename, os.path.basename(filename))
+    return zip_buffer.getvalue(), json_files
+
+
+def get_master_password():
+    """主试密码只从环境变量或 Streamlit Secrets 读取。"""
+    password = os.environ.get("MASTER_PASSWORD")
+    if password:
+        return password
+    try:
+        return st.secrets.get("MASTER_PASSWORD")
+    except FileNotFoundError:
+        return None
+
+
+# ==================== 主试专用数据下载（侧边栏） ====================
+st.sidebar.markdown("---")
+st.sidebar.header("🔐 主试数据管理")
+
+if "show_download" not in st.session_state:
+    st.session_state.show_download = False
+
+master_password = get_master_password()
+password_input = st.sidebar.text_input("请输入主试密码：", type="password")
+
+if st.sidebar.button("验证密码", key="verify_master_password"):
+    if not master_password:
+        st.sidebar.error("尚未配置主试密码，请先在 Streamlit Secrets 中添加 MASTER_PASSWORD。")
+        st.session_state.show_download = False
+    elif hmac.compare_digest(password_input, master_password):
+        st.session_state.show_download = True
+        st.sidebar.success("密码正确，可直接下载全部数据。")
+    else:
+        st.sidebar.error("密码错误")
+        st.session_state.show_download = False
+
+if st.session_state.show_download and master_password:
+    zip_data, json_files = build_all_experiments_zip()
+    if zip_data:
+        st.sidebar.download_button(
+            label="📥 下载全部实验数据 ZIP",
+            data=zip_data,
+            file_name="all_experiments.zip",
+            mime="application/zip",
+            key="download_all_experiments"
+        )
+        st.sidebar.info(f"当前共 {len(json_files)} 条提交数据")
+    else:
+        st.sidebar.warning("暂无提交数据")
+
+    if st.sidebar.button("📋 查看已有提交编号", key="show_submitted_ids"):
+        if json_files:
+            st.sidebar.write("已提交的用户编号：")
+            for filename in json_files:
+                uid = os.path.basename(filename).replace("experiment_", "").replace(".json", "")
+                st.sidebar.text(f"✅ {uid}")
+        else:
+            st.sidebar.warning("暂无提交数据")
+
+    if st.sidebar.button("退出主试模式", key="logout_master"):
+        st.session_state.show_download = False
+        st.rerun()
 
 # ==================== 用户编号输入与分组 ====================
 if "user_id" not in st.session_state:
@@ -46,6 +139,7 @@ if st.session_state.user_id is None:
             st.session_state.phase2_text = ""
             st.session_state.messages = []
             st.session_state.greeted = False
+            st.session_state.completed_data = None
             st.rerun()
     st.stop()
 
@@ -282,56 +376,6 @@ if st.session_state.phase == 2:
             st.rerun()
 
     st.stop()
-        # ==================== 主试专用数据下载（侧边栏） ====================
-st.sidebar.markdown("---")
-st.sidebar.header("🔐 主试数据管理")
-
-# 设置主试密码（你可以改成自己记得住的密码）
-MASTER_PASSWORD = "123456"
-
-if "show_download" not in st.session_state:
-    st.session_state.show_download = False
-
-password_input = st.sidebar.text_input("请输入主试密码：", type="password")
-if st.sidebar.button("验证密码"):
-    if password_input == MASTER_PASSWORD:
-        st.session_state.show_download = True
-        st.sidebar.success("密码正确，可下载数据")
-    else:
-        st.sidebar.error("密码错误")
-        st.session_state.show_download = False
-
-if st.session_state.show_download:
-    tmp_dir = tempfile.gettempdir()
-    if st.sidebar.button("📥 打包下载所有实验数据"):
-        json_files = glob.glob(os.path.join(tmp_dir, "experiment_*.json"))
-        if json_files:
-            zip_path = os.path.join(tmp_dir, "all_experiments.zip")
-            with zipfile.ZipFile(zip_path, 'w') as zf:
-                for f in json_files:
-                    zf.write(f, os.path.basename(f))
-            with open(zip_path, "rb") as f:
-                st.sidebar.download_button(
-                    label="点击下载 ZIP 文件",
-                    data=f,
-                    file_name="all_experiments.zip",
-                    mime="application/zip"
-                )
-            st.sidebar.info(f"共 {len(json_files)} 条数据已打包")
-        else:
-            st.sidebar.warning("暂无提交数据")
-    
-    # 显示已有数据列表
-    if st.sidebar.button("📋 查看已有提交编号"):
-        json_files = glob.glob(os.path.join(tmp_dir, "experiment_*.json"))
-        if json_files:
-            ids = [os.path.basename(f).replace("experiment_", "").replace(".json", "") for f in json_files]
-            st.sidebar.write("已提交的用户编号：")
-            for uid in sorted(ids):
-                st.sidebar.text(f"✅ {uid}")
-        else:
-            st.sidebar.warning("暂无提交数据")
-        st.stop()
 # ==================== 阶段二后问卷 (phase=2.5) ====================
 if st.session_state.phase == 2.5:
     st.title("实验即将结束，请填写最后问卷")
@@ -346,14 +390,38 @@ if st.session_state.phase == 2.5:
     st.markdown(f"[📝 打开问卷]({survey_link})")
     st.divider()
     if st.button("提交问卷并完成实验"):
+        completed_data = {
+            "user_id": st.session_state.user_id,
+            "group": st.session_state.group,
+            "phase1_text": st.session_state.phase1_text,
+            "phase2_text": st.session_state.final_text,
+            "messages": st.session_state.messages if (ai_phase1 or ai_phase2) else [],
+            "timestamp": datetime.now().isoformat()
+        }
+        save_experiment_data(completed_data)
+        st.session_state.completed_data = completed_data
         st.session_state.phase = 3
         st.rerun()
     st.stop()
 
 # ==================== 最终提交与保存 (phase=3) ====================
 if st.session_state.phase == 3:
+    data = st.session_state.get("completed_data")
+    if not data:
+        # 兼容更新前已经进入最终页面的会话。
+        data = {
+            "user_id": st.session_state.user_id,
+            "group": st.session_state.group,
+            "phase1_text": st.session_state.phase1_text,
+            "phase2_text": st.session_state.final_text,
+            "messages": st.session_state.messages if (ai_phase1 or ai_phase2) else [],
+            "timestamp": datetime.now().isoformat()
+        }
+        save_experiment_data(data)
+        st.session_state.completed_data = data
+
     # 预览（若阶段二有AI，显示红色标记）
-    final_text = st.session_state.final_text
+    final_text = data["phase2_text"]
     if ai_phase2:
         display = re.sub(r'【(.*?)】', r'<span style="color:red">【\1】</span>', final_text)
         st.markdown("### 方案预览（红色部分为你自己的想法）")
@@ -362,21 +430,16 @@ if st.session_state.phase == 3:
         st.markdown("### 你提交的最终方案")
         st.markdown(final_text)
 
-    # 组装数据
-    data = {
-        "user_id": st.session_state.user_id,
-        "group": st.session_state.group,
-        "phase1_text": st.session_state.phase1_text,
-        "phase2_text": final_text,
-        "messages": st.session_state.messages if (ai_phase1 or ai_phase2) else [],
-        "timestamp": datetime.now().isoformat()
-    }
-    import tempfile
-    filename = os.path.join(tempfile.gettempdir(), f"experiment_{st.session_state.user_id}.json")
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(data, f, ensure_ascii=False, indent=2)
-
     st.balloons()
     st.success("所有步骤已完成，感谢你的参与！")
-    st.info("你现在可以关闭本页面。")
+    st.info("你可以下载自己的实验记录作为备份，然后关闭本页面。")
+    participant_json = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
+    st.download_button(
+        label="📥 下载我的实验记录",
+        data=participant_json,
+        file_name=f"experiment_{safe_user_id(data['user_id'])}.json",
+        mime="application/json",
+        key="download_my_experiment"
+    )
+    st.caption("此文件只包含你本人的实验答案和与AI的对话记录。")
     st.stop()
