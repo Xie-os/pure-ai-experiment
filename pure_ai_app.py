@@ -259,7 +259,7 @@ if st.session_state.phase == 1:
         st.session_state.phase1_text = p1
 
     st.divider()
-    if st.button("保存并进入阶段二"):
+    if st.button("已完成，去填写问卷"):
         if st.session_state.phase1_text.strip() == "":
             st.warning("请至少写一些内容再继续")
         else:
@@ -383,7 +383,7 @@ if st.session_state.phase == 2:
 # ==================== 阶段二后问卷 (phase=2.5) ====================
 if st.session_state.phase == 2.5:
     st.title("实验即将结束，请填写最后问卷")
-    st.markdown("请点击下方链接完成问卷，完成后回到本页面点击下方按钮。")
+    st.markdown("请点击下方“打开问卷”链接完成问卷，完成后回到本页面点击下方提交按钮。")
     
     # 根据阶段二是否有AI显示不同问卷
     if ai_phase2:
@@ -436,7 +436,7 @@ if st.session_state.phase == 3:
 
     st.balloons()
     st.success("所有步骤已完成，感谢你的参与！")
-    st.info("你可以下载自己的实验记录作为备份，然后关闭本页面。")
+    st.info("你可以下载自己的实验记录，然后关闭本页面。")
     participant_json = json.dumps(data, ensure_ascii=False, indent=2).encode("utf-8")
     st.download_button(
         label="📥 下载我的实验记录",
