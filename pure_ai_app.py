@@ -297,7 +297,7 @@ if st.session_state.phase == 2:
         基于阶段一的构思，请进一步深化你的设计方案，包含以下要点：  
         请从刚才阶段一的想法点子中选出一个。分点罗列，详细说明这个手机壳的附加功能具体是如何使用或应用的。例如：功能详述、结构/材质说明、使用场景和优势等等。
         - 你可以自由与AI讨论并整合建议。
-        - 阶段一答案会在上方单独显示，仅供参考；请在下方独立答题框中完成阶段二答案。
+        - 阶段一答案可在答题框上方点击展开查看，仅供参考；请在下方独立答题框中完成阶段二答案。
         """)
     else:
         st.markdown("""
@@ -305,24 +305,23 @@ if st.session_state.phase == 2:
         基于阶段一的构思，请进一步深化你的设计方案，包含以下要点：  
         请从刚才阶段一的想法点子中选出一个。分点罗列，详细说明这个手机壳的附加功能具体是如何使用或应用的。例如：功能详述、结构/材质说明、使用场景和优势等等。
         - 请依靠自己的知识和搜集相关资料作答，不可以使用任何AI工具。
-        - 阶段一答案会在上方单独显示，仅供参考；请在下方独立答题框中完成阶段二答案。
+        - 阶段一答案可在答题框上方点击展开查看，仅供参考；请在下方独立答题框中完成阶段二答案。
         """)
 
     def render_phase2_answer_boxes(answer_key, answer_caption):
-        """将阶段一答案与阶段二输入框分开显示，避免受试者混淆。"""
-        with st.container(border=True):
-            st.markdown("#### 📌 阶段一已提交答案（仅供参考）")
+        """以折叠参考区和独立输入框显示两个阶段，避免受试者混淆。"""
+        with st.expander("📌 阶段一答案回顾（点击展开，仅供参考）", expanded=False):
             st.caption("下面是你在阶段一提交的内容，不能在此修改。")
             st.text_area(
                 "阶段一答案（只读）",
                 value=st.session_state.phase1_text,
-                height=180,
+                height=120,
                 disabled=True,
                 key=f"{answer_key}_phase1_reference"
             )
 
+        st.subheader("📝 阶段二独立答题区")
         with st.container(border=True):
-            st.markdown("#### ✍️ 阶段二独立答题框")
             st.caption(answer_caption)
             return st.text_area(
                 "阶段二答案",
@@ -374,7 +373,6 @@ if st.session_state.phase == 2:
                     with st.chat_message("assistant"):
                         st.markdown(ai_msg)
         with col_right:
-            st.subheader("📝 阶段二作答区")
             p2 = render_phase2_answer_boxes(
                 "p2",
                 "请基于阶段一构思，在此完成方案细化。可整合AI建议，并用【】括起你自己的原创想法。"
@@ -387,7 +385,6 @@ if st.session_state.phase == 2:
                 st.session_state.phase = 2.5
                 st.rerun()
     else:
-        st.subheader("📝 阶段二作答区（请独立完成，不要使用任何外部工具）")
         p2 = render_phase2_answer_boxes(
             "p2",
             "请基于阶段一构思，在此独立完成方案细化，不要使用任何AI工具。"
