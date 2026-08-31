@@ -297,7 +297,7 @@ if st.session_state.phase == 2:
         基于阶段一的构思，请进一步深化你的设计方案，包含以下要点：  
         请从刚才阶段一的想法点子中选出一个。分点罗列，详细说明这个手机壳的附加功能具体是如何使用或应用的。例如：功能详述、结构/材质说明、使用场景和优势等等。
         - 你可以自由与AI讨论并整合建议。
-        - 阶段一的内容已自动带入，你可以在此基础上修改完善。
+        - 阶段一答案会在上方单独显示，仅供参考；请在下方独立答题框中完成阶段二答案。
         """)
     else:
         st.markdown("""
@@ -305,15 +305,32 @@ if st.session_state.phase == 2:
         基于阶段一的构思，请进一步深化你的设计方案，包含以下要点：  
         请从刚才阶段一的想法点子中选出一个。分点罗列，详细说明这个手机壳的附加功能具体是如何使用或应用的。例如：功能详述、结构/材质说明、使用场景和优势等等。
         - 请依靠自己的知识和搜集相关资料作答，不可以使用任何AI工具。
-        - 阶段一的内容已自动带入，你可以在此基础上修改完善。
+        - 阶段一答案会在上方单独显示，仅供参考；请在下方独立答题框中完成阶段二答案。
         """)
 
-     # 构造阶段二的初始文本（含分隔符）
-    initial_text = st.session_state.phase1_text
-    if st.session_state.phase2_text:
-        initial_text += "\n\n" + "=" * 50 + "\n--- 阶段二新内容（请在下方继续完善） ---\n" + "=" * 50 + "\n\n" + st.session_state.phase2_text
-    else:
-        initial_text += "\n\n" + "=" * 50 + "\n--- 阶段二新内容（请在下方继续完善） ---\n" + "=" * 50
+    def render_phase2_answer_boxes(answer_key, answer_caption):
+        """将阶段一答案与阶段二输入框分开显示，避免受试者混淆。"""
+        with st.container(border=True):
+            st.markdown("#### 📌 阶段一已提交答案（仅供参考）")
+            st.caption("下面是你在阶段一提交的内容，不能在此修改。")
+            st.text_area(
+                "阶段一答案（只读）",
+                value=st.session_state.phase1_text,
+                height=180,
+                disabled=True,
+                key=f"{answer_key}_phase1_reference"
+            )
+
+        with st.container(border=True):
+            st.markdown("#### ✍️ 阶段二独立答题框")
+            st.caption(answer_caption)
+            return st.text_area(
+                "阶段二答案",
+                value=st.session_state.phase2_text,
+                height=320,
+                key=answer_key,
+                placeholder="请在这里填写阶段二答案……"
+            )
 
     if ai_phase2:
         activate_ai_greeting()
@@ -358,8 +375,10 @@ if st.session_state.phase == 2:
                         st.markdown(ai_msg)
         with col_right:
             st.subheader("📝 阶段二作答区")
-            st.caption("可整合阶段一内容和AI建议。可以用【】括起**你自己的原创想法**，提交后将显示为红色，以区别于AI的建议。")
-            p2 = st.text_area("答案", value=initial_text, height=400, key="p2")
+            p2 = render_phase2_answer_boxes(
+                "p2",
+                "请基于阶段一构思，在此完成方案细化。可整合AI建议，并用【】括起你自己的原创想法。"
+            )
             st.session_state.phase2_text = p2
             
             # 提交按钮（有AI时）
@@ -369,8 +388,10 @@ if st.session_state.phase == 2:
                 st.rerun()
     else:
         st.subheader("📝 阶段二作答区（请独立完成，不要使用任何外部工具）")
-        st.caption("阶段一的内容已显示，你可以继续编辑。")
-        p2 = st.text_area("答案", value=initial_text, height=400, key="p2")
+        p2 = render_phase2_answer_boxes(
+            "p2",
+            "请基于阶段一构思，在此独立完成方案细化，不要使用任何AI工具。"
+        )
         st.session_state.phase2_text = p2
 
        # 提交按钮（无AI时）
