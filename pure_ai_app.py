@@ -277,7 +277,7 @@ if st.session_state.phase == 1.5:
     if ai_phase1:
         survey_link = "https://v.wjx.cn/vm/OUqrnbt.aspx#"
     else:
-        survey_link = "https://v.wjx.cn/vm/eI3byHI.aspx#"
+        survey_link = "https://v.wjx.cn/vm/mtOir2o.aspx#"
         
     st.markdown(f"[📝 打开问卷]({survey_link})")
     st.divider()
@@ -407,7 +407,7 @@ if st.session_state.phase == 2.5:
     if ai_phase2:
         survey_link = "https://v.wjx.cn/vm/rXkfPYr.aspx#"
     else:
-        survey_link = "https://v.wjx.cn/vm/thj2x5g.aspx#"
+        survey_link = "https://v.wjx.cn/vm/escW1pv.aspx#"
         
     st.markdown(f"[📝 打开问卷]({survey_link})")
     st.divider()
